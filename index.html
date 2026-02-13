@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>🍭おやつおみくじ＋デコ</title>
-<meta name="description" content="中高生向け おやつ占い＋デコ機能。1日1回無料。">
+<title>🍭おやつおみくじ＋デコ（完全版）</title>
+<meta name="description" content="おやつ占い＋デコ機能。1日1回無料。">
 <style>
   :root{
     --main:#ff5fa2;
@@ -22,13 +22,14 @@
   .tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px;}
   .tools button{width:auto;padding:10px 14px;}
   canvas{width:100%;max-width:420px;border:1px solid #ddd;border-radius:12px;display:block;margin:12px auto;}
-  .stampGrid{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;}
+  .stampGrid{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-height:220px;overflow:auto;}
   .stampBtn{padding:8px 10px;border-radius:10px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:18px;}
   .hidden{display:none;}
   .row{display:flex;gap:8px;flex-wrap:wrap;}
   .row > *{flex:1 1 150px;}
   .share{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
   .share button{width:auto;}
+  .mini{font-size:12px;color:#666;margin-top:-6px;margin-bottom:8px;}
   @media (max-width:480px){
     h1{font-size:20px;}
     .row{flex-direction:column;}
@@ -39,7 +40,7 @@
 
 <div class="wrap">
   <div class="card" id="main">
-    <h1>🍭おやつおみくじ🍬</h1>
+    <h1>🍭おやつおみくじ🍬（完全版）</h1>
 
     <input id="nickname" placeholder="ニックネーム">
     <input type="date" id="birthday">
@@ -58,9 +59,6 @@
     <button id="startBtn">占う</button>
     <div id="count"></div>
 
-    <!-- 結果を開くボタン -->
-    <button id="openResultBtn" class="hidden">結果を開く</button>
-
     <div id="ad">
       広告枠（ここにAdSenseコードを貼ってください）
     </div>
@@ -74,9 +72,10 @@
 </div>
 
 <script>
-// ====== データ（実在100ずつ） ======
-const snacks = [
-"ポッキー","極細ポッキー","いちごポッキー","アーモンドポッキー","プリッツ","サラダプリッツ","トマトプリッツ",
+/* ==========================
+   データ（100個ずつ）
+========================== */
+const snacks = ["ポッキー","極細ポッキー","いちごポッキー","アーモンドポッキー","プリッツ","サラダプリッツ","トマトプリッツ",
 "キットカット","オトナの甘さキットカット","抹茶キットカット","ブラックサンダー","白いブラックサンダー","ブラックサンダーミニ",
 "チロルチョコ","きなこもちチロル","ミルクチロル","いちごチロル","じゃがりこサラダ","じゃがりこチーズ","じゃがりこ明太子",
 "ポテトチップスうすしお","ポテトチップスコンソメ","ポテトチップスのり塩","堅あげポテト","ピザポテト","カラムーチョ","すっぱムーチョ",
@@ -88,10 +87,9 @@ const snacks = [
 "ばかうけ","歌舞伎揚","柿の種","たべっ子どうぶつ","マーブルチョコ","パイの実","ホームパイ","カプリコ","フルーツゼリー",
 "どら焼き","ミニたい焼き","コンビニプリン","シュークリーム","エクレア","ロールケーキ","大福","みたらし団子","メロンパン",
 "クリームパン","チョコスナックパン","ポップコーン","グラノーラバー","ナッツミックス","ビターチョコ","ホワイトチョコ","バナナチップス",
-"おにぎりせんべい"
-];
-const drinks = [
-"コカ・コーラ","コーラゼロ","ファンタオレンジ","ファンタグレープ","カルピス","カルピスソーダ","三ツ矢サイダー",
+"おにぎりせんべい"];
+
+const drinks = ["コカ・コーラ","コーラゼロ","ファンタオレンジ","ファンタグレープ","カルピス","カルピスソーダ","三ツ矢サイダー",
 "メロンソーダ","ジンジャーエール","午後の紅茶ストレート","午後の紅茶ミルク","午後の紅茶レモン","リプトンミルクティー",
 "抹茶ラテ","カフェオレ","ボスカフェオレ","缶コーヒー微糖","ブラックコーヒー","ポカリスエット","アクエリアス",
 "いろはす","天然水","炭酸水","オレンジジュース","アップルジュース","グレープジュース","野菜ジュース","トマトジュース",
@@ -102,8 +100,8 @@ const drinks = [
 "白ぶどうジュース","アロエドリンク","グリーンスムージー","紅茶花伝","ジャワティー","コーンポタージュ缶","おしるこ缶",
 "ホットレモン","ホットミルク","ペットボトルコーヒー","甘酒","フルーツミックスジュース","梅ジュース","青りんごジュース",
 "グァバジュース","パインジュース","ソルティライチ","ビタミンウォーター","レモンスカッシュ","ピーチネクター","ぶどうソーダ",
-"オレンジスカッシュ","メッツコーラ","キレートレモン","MATCH","リアルゴールド","ミロ","ほろよい風炭酸（ノンアル）","豆乳バナナ"
-];
+"オレンジスカッシュ","メッツコーラ","キレートレモン","MATCH","リアルゴールド","ミロ","ほろよい風炭酸（ノンアル）","豆乳バナナ"];
+
 const messages = [
 "今日は無理しなくて大丈夫。","小さな一歩が未来を変える。","笑顔が運を引き寄せる。","焦らなくていい。","自分をちゃんと褒めて。",
 "あなたならできる。","挑戦がチャンスを呼ぶ。","友達との時間を大切に。","今日は早めに休もう。","深呼吸でリセット。",
@@ -126,18 +124,20 @@ const messages = [
 "自分を大切に。","今日はチャンス到来。","あなたなら乗り越えられる。","今日は安心していい。","未来は明るいよ。","今日も前進中。"
 ];
 
-// スタンプ50以上（絵文字）
-const stamps = ["⭐","✨","💖","💫","🌈","🎀","🍓","🍩","🍪","🍫","🍭","🎉","🎊","🧁","🍰","🍧","🍨","🍦","🥤","☕","🍵","🍋","🍊","🍇","🍉","🍌","🍍","🥝","🍎","🍏","🍐","🍒","🍑","🥭","🥥","🍆","🌽","🥕","🍠","🍞","🥐","🧃","🧋","🫐","🫶","🤍","🖤","💛","💙","💚","🧡","💜","🩷","🩵","🫧","🎈","🧸","🪅","🪩","🧿","🌟","🌙","☀️","🌸","🌼","🍀","🌿","🍃","🌱","🪴","🧡","🩷"];
+const stamps = ["⭐","✨","💖","💫","🌈","🎀","🍓","🍩","🍪","🍫","🍭","🎉","🎊","🧁","🍰","🍧","🍨","🍦","🥤","☕","🍵","🍋","🍊","🍇","🍉","🍌","🍍","🥝","🍎","🍏","🍐","🍒","🍑","🥭","🥥","🍆","🌽","🥕","🍠","🍞","🥐","🧃","🧋","🫐","🫶","🤍","🖤","💛","💙","💚","🧡","💜","🩷","🩵","🫧","🎈","🧸","🪅","🪩","🧿","🌟","🌙","☀️","🌸","🌼","🍀","🌿","🍃","🌱","🪴","🧡","🩷","🫶","🧸","🪩","🌟","🌙","🌈","✨","💫","💖","🍓","🍩","🍪","🍫","🍭","🎉"];
 
+/* ==========================
+   1日1回制限
+========================== */
 const today = new Date().toISOString().slice(0,10);
-
-// 1日1回制限
 if(localStorage.getItem("lastDate")===today){
   document.getElementById("startBtn").disabled=true;
   document.getElementById("startBtn").textContent="今日の占いは済み";
 }
 
-// 背景保存
+/* ==========================
+   背景保存
+========================== */
 const bgKey = "bgImage";
 const bg = localStorage.getItem(bgKey);
 if(bg) document.body.style.backgroundImage = `url(${bg})`;
@@ -157,7 +157,11 @@ document.getElementById("bgClear").onclick = ()=>{
   localStorage.removeItem(bgKey);
 };
 
-// 占い開始
+/* ==========================
+   占い開始（ポップアップ回避）
+========================== */
+let resultWindow = null;
+
 document.getElementById("startBtn").onclick = ()=>{
   const nick = document.getElementById("nickname").value.trim();
   const birth = document.getElementById("birthday").value;
@@ -167,6 +171,9 @@ document.getElementById("startBtn").onclick = ()=>{
     alert("ニックネームと生年月日を入力してください");
     return;
   }
+
+  // ここで新しいタブを開く（ポップアップブロック回避）
+  resultWindow = window.open("about:blank", "_blank");
 
   let sec=10;
   const countEl = document.getElementById("count");
@@ -182,28 +189,23 @@ document.getElementById("startBtn").onclick = ()=>{
       document.getElementById("startBtn").disabled=true;
       document.getElementById("startBtn").textContent="今日の占いは済み";
 
-      // 結果ボタン表示
-      const openBtn = document.getElementById("openResultBtn");
-      openBtn.classList.remove("hidden");
-      openBtn.onclick = () => openResult({nick,birth,gender});
+      const seed = hash(nick + birth + gender + today);
+      const snack = snacks[seed % snacks.length];
+      const drink = drinks[(seed>>2) % drinks.length];
+      const msg = messages[(seed>>4) % messages.length];
+
+      const data = {user:{nick,birth,gender}, snack, drink, msg, date:new Date().toLocaleString()};
+      const url = new URL(location.href);
+      url.searchParams.set("result", btoa(JSON.stringify(data)));
+
+      if(resultWindow) resultWindow.location = url.toString();
     }
   },1000);
 };
 
-// 結果ページを新タブで開く
-function openResult(user){
-  const seed = hash(user.nick + user.birth + user.gender + today);
-  const snack = snacks[seed % snacks.length];
-  const drink = drinks[(seed>>2) % drinks.length];
-  const msg = messages[(seed>>4) % messages.length];
-
-  const data = {user, snack, drink, msg, date:new Date().toLocaleString()};
-  const url = new URL(location.href);
-  url.searchParams.set("result", btoa(JSON.stringify(data)));
-  window.open(url.toString(), "_blank");
-}
-
-// 共有URL
+/* ==========================
+   共有
+========================== */
 function copyURL(){
   const url = location.href;
   navigator.clipboard.writeText(url);
@@ -218,15 +220,15 @@ function openSNS(kind){
     window.open(`https://line.me/R/msg/text/?${text}%0A${url}`);
   }
 }
-
-// ハッシュ関数（毎日同じ結果）
 function hash(s){
   let h=0;
   for(let i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i))|0;
   return Math.abs(h);
 }
 
-// 結果ページ表示
+/* ==========================
+   結果ページ表示
+========================== */
 const params = new URLSearchParams(location.search);
 const res = params.get("result");
 if(res){
@@ -240,16 +242,20 @@ if(res){
       <p>🥤 飲み物：<b>${data.drink}</b></p>
       <p>💬 一言：<b>${data.msg}</b></p>
       <p>🕒 ${data.date}</p>
+
       <canvas id="canvas" width="420" height="560"></canvas>
 
       <div class="tools">
         <input type="color" id="color" value="#ff2e8a">
+        <input type="range" id="size" min="1" max="30" value="6">
+        <input type="range" id="opacity" min="0.1" max="1" step="0.1" value="1">
         <input type="range" id="blur" min="0" max="20" value="0">
         <button onclick="mode('pen')">ペン</button>
         <button onclick="mode('stamp')">スタンプ</button>
         <button onclick="saveImg()">画像保存</button>
         <button onclick="share()">共有</button>
       </div>
+      <div class="mini">※ペン：色・太さ・透明度・ぼかしが変えられます</div>
 
       <div class="row">
         <input type="color" id="bgColor" value="#ffffff">
@@ -264,13 +270,14 @@ if(res){
   initDeco();
 }
 
-// デコ機能
+/* ==========================
+   デコ機能
+========================== */
 let canvas, ctx, drawing=false, modeType="pen";
 function initDeco(){
   canvas=document.getElementById("canvas");
   ctx=canvas.getContext("2d");
 
-  // 背景を表示（もし保存があるなら）
   const savedBg = localStorage.getItem("bgImage");
   if(savedBg){
     const img = new Image();
@@ -281,7 +288,6 @@ function initDeco(){
     ctx.fillRect(0,0,canvas.width,canvas.height);
   }
 
-  // スタンプ表示
   const grid=document.getElementById("stampGrid");
   stamps.forEach(s=>{
     const btn=document.createElement("button");
@@ -291,18 +297,44 @@ function initDeco(){
     grid.appendChild(btn);
   });
 
-  canvas.onmousedown = ()=>{drawing=true; ctx.beginPath();}
+  // PC
+  canvas.onmousedown = (e)=>{drawing=true; ctx.beginPath(); draw(e); }
   canvas.onmouseup = ()=>{drawing=false; saveDeco();}
-  canvas.onmousemove = (e)=>{
+  canvas.onmousemove = (e)=>{ if(!drawing || modeType!=="pen") return; draw(e); }
+
+  // スマホ対応（タッチ）
+  canvas.addEventListener("touchstart", (e)=>{
+    e.preventDefault();
+    drawing=true; ctx.beginPath();
+    draw(e.touches[0]);
+  });
+  canvas.addEventListener("touchmove", (e)=>{
+    e.preventDefault();
     if(!drawing || modeType!=="pen") return;
-    ctx.lineWidth=5;
-    ctx.strokeStyle=document.getElementById("color").value;
-    ctx.filter = `blur(${document.getElementById("blur").value}px)`;
-    ctx.lineTo(e.offsetX,e.offsetY);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(e.offsetX,e.offsetY);
-  };
+    draw(e.touches[0]);
+  });
+  canvas.addEventListener("touchend", ()=>{
+    drawing=false; saveDeco();
+  });
+}
+
+function getPos(e){
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+  return {x,y};
+}
+
+function draw(e){
+  const pos = getPos(e);
+  ctx.lineWidth = document.getElementById("size").value;
+  ctx.strokeStyle = document.getElementById("color").value;
+  ctx.globalAlpha = document.getElementById("opacity").value;
+  ctx.filter = `blur(${document.getElementById("blur").value}px)`;
+  ctx.lineTo(pos.x,pos.y);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(pos.x,pos.y);
 }
 
 function mode(t){
@@ -311,6 +343,8 @@ function mode(t){
 
 function placeStamp(s){
   if(!canvas) return;
+  ctx.globalAlpha = 1;
+  ctx.filter = "none";
   ctx.font="40px sans-serif";
   ctx.fillText(s, canvas.width/2 - 20, canvas.height/2);
   saveDeco();
@@ -320,33 +354,10 @@ function saveDeco(){
   localStorage.setItem("deco_"+today, canvas.toDataURL());
 }
 
+/* ==========================
+   画像保存（結果+デコを1枚にまとめる）
+========================== */
 function saveImg(){
   const link=document.createElement("a");
-  link.download="omikuji.png";
-  link.href=canvas.toDataURL();
-  link.click();
-}
-
-function share(){
-  const url = location.href;
-  navigator.clipboard.writeText(url);
-  alert("共有URLをコピーしました！");
-}
-
-function setBgColor(){
-  const color = document.getElementById("bgColor").value;
-  ctx.fillStyle = color;
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-  saveDeco();
-}
-
-// もし保存されたデコがあるなら読み込み
-const deco = localStorage.getItem("deco_"+today);
-if(deco && canvas){
-  const img=new Image();
-  img.onload=()=>ctx.drawImage(img,0,0);
-  img.src=deco;
-}
-</script>
-</body>
-</html>
+  link.download="omikuji_deco.png";
+  link
